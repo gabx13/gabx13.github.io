@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=devide-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>LaFA logo</title>
+
+</head>
+
+<body>
+<link rel="stylesheet" href="css/main.css">
+  <div class="container">
+    <!-- <div class="bm" data-file="data"></div>
+    <div class="bm" data-file="data1"></div> -->
+    <div class="bm" data-file="data3"></div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.5/lottie.min.js"></script>
+  <!-- <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script> -->
+
+
+  <script>
+    var bm = document.getElementsByClassName('bm');
+
+    Array.prototype.forEach.call(bm, icon => {
+
+      var anim = bodymovin.loadAnimation({
+        container: icon,
+        path: `icon/${icon.dataset.file}.json`,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false
+
+      })
+
+      setTimeout(function(){
+        anim.play();
+        anim.setSpeed(0.9) }, 5000)
+
+      anim.addEventListener('complete', function() {
+        setTimeout(function(){
+          anim.goToAndPlay(0);
+        },5000)
+      })
+
+      // anim.goToAndPlay(0)
+      // icon.addEventListener('mouseenter', () => {
+      //   anim.setDirection(1)
+      //   anim.play();
+      // })
+
+      icon.addEventListener('click', () => {
+        anim.setDirection(1)
+        // anim.setDirection(-1)
+        anim.goToAndPlay(0);
+        // anim.play();
+      })
+      //
+      // icon.addEventListener('mouseleave', () => {
+      //   anim.setDirection(-1)
+      //   anim.play();
+      // })
+
+    })
+
+  </script>
+
+</body>
+</html>
