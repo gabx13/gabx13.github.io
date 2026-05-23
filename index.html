@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mike Walker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090f;
+      --surface: #11141f;
+      --surface2: #181c2b;
+      --border: #1e2438;
+      --accent: #4f7ef8;
+      --accent-glow: rgba(79,126,248,0.25);
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #f1f5f9;
+      --muted: #8b93a8;
+      --dim: #4a5267;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 60% 50% at 15% 40%, rgba(79,126,248,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 70%, rgba(34,197,94,0.03) 0%, transparent 60%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 1.5rem;
+    }
+
+    /* ── Profile Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem 2rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .avatar-wrap {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 1.25rem;
+    }
+
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: top center;
+      border: 2px solid var(--border);
+      display: block;
+    }
+
+    .online-dot {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      width: 13px;
+      height: 13px;
+      background: var(--green);
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      box-shadow: 0 0 8px rgba(34,197,94,0.6);
+    }
+
+    .name {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.3rem;
+    }
+
+    .role {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.4rem;
+    }
+
+    .bio {
+      font-size: 0.9rem;
+      color: #b0b8cc;
+      line-height: 1.75;
+      margin-bottom: 1.75rem;
+      text-align: left;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.625rem;
+    }
+
+    .btn {
+      padding: 0.75rem 0.5rem;
+      border-radius: 14px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-call {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(79,126,248,0.35);
+    }
+
+    .btn-call:hover {
+      background: #5f8dff;
+      box-shadow: 0 6px 20px rgba(79,126,248,0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-chat {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-chat:hover {
+      background: #1e2540;
+      transform: translateY(-1px);
+    }
+
+    /* ── Calling Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 2.5rem 2rem;
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      transform: translateY(12px) scale(0.97);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .ring-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .ring-wrap::before,
+    .ring-wrap::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      opacity: 0;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    .ring-wrap::after {
+      animation-delay: 0.7s;
+    }
+
+    @keyframes pulse-ring {
+      0%   { width: 96px; height: 96px; opacity: 0.6; }
+      100% { width: 160px; height: 160px; opacity: 0; }
+    }
+
+    .modal-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: top center;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+      position: relative;
+      z-index: 1;
+    }
+
+    .modal-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .call-status {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .status-spinner {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .btn-hangup {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(239,68,68,0.4);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .btn-hangup:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 22px rgba(239,68,68,0.55);
+    }
+
+    .btn-hangup:active { transform: scale(0.95); }
+
+    /* Widget is in the DOM but its trigger button is hidden via JS */
+    elevenlabs-convai {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Profile Card ── -->
+  <div class="card">
+    <div class="avatar-wrap">
+      <img src="MikeObitPic-1-scaled.jpeg" alt="Mike Walker" class="avatar" />
+      <span class="online-dot"></span>
+    </div>
+
+    <h1 class="name">Mike Walker</h1>
+    <p class="role">Marine Mechanic &amp; Boat Engineer</p>
+
+    <p class="bio">
+      Born in Duluth, Minnesota. Spent decades working in Seattle shipyards
+      and on Alaskan fishing vessels. A man of few words and careful hands —
+      he listens to machines the way others listen to people.
+    </p>
+
+    <div class="divider"></div>
+
+    <div class="buttons">
+      <button class="btn btn-call" id="callBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.01 2.22 2 2 0 012 .04h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+        Call Mike
+      </button>
+      <button class="btn btn-chat" id="chatBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        Chat
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Calling Modal ── -->
+  <div class="modal-overlay" id="callModal">
+    <div class="modal-card">
+      <div class="ring-wrap">
+        <img src="MikeObitPic-1-scaled.jpeg" alt="Mike Walker" class="modal-avatar" />
+      </div>
+      <p class="modal-name">Mike Walker</p>
+      <p class="call-status">
+        <span class="status-spinner"></span>
+        Connecting…
+      </p>
+      <button class="btn-hangup" id="hangupBtn" title="End call">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.42 19.42 0 01-3.33-2.67m-2.67-3.34a19.79 19.79 0 01-3.07-8.63A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91"/>
+          <line x1="23" y1="1" x2="1" y2="23"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ElevenLabs ConvAI Widget -->
+  <elevenlabs-convai
+    agent-id="agent_5001ks0tttfqfys8e505bm63byp3"
+    placement="bottom"
+  ></elevenlabs-convai>
+
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
+  <script>
+    const callModal = document.getElementById('callModal');
+    const callBtn   = document.getElementById('callBtn');
+    const chatBtn   = document.getElementById('chatBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
+
+    let widgetTrigger = null;
+
+    // Wait for the widget's shadow root, grab its trigger button, and hide it.
+    // .click() still works on display:none elements, so we can fire it later.
+    async function initWidget() {
+      const widget = document.querySelector('elevenlabs-convai');
+      if (!widget) return;
+      for (let i = 0; i < 60; i++) {
+        const btn = widget.shadowRoot?.querySelector('button');
+        if (btn) {
+          btn.style.display = 'none';
+          widgetTrigger = btn;
+          return;
+        }
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
+
+    async function openConversation() {
+      if (!widgetTrigger) await initWidget();
+      widgetTrigger?.click();
+    }
+
+    callBtn.addEventListener('click', async () => {
+      callModal.classList.add('open');
+      await openConversation();
+    });
+
+    chatBtn.addEventListener('click', () => openConversation());
+
+    function closeModal() {
+      callModal.classList.remove('open');
+    }
+
+    hangupBtn.addEventListener('click', closeModal);
+    callModal.addEventListener('click', e => { if (e.target === callModal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // Start hiding the button as soon as possible
+    initWidget();
+  </script>
+</body>
+</html>
