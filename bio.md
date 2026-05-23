@@ -313,7 +313,7 @@ Strong connection to tools and machines
 Finds meaning in routine
 Memory tied to sound, smell, and movement
 
-⸻
+-⸻
 
 Core Themes
 
