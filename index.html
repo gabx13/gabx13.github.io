@@ -278,13 +278,6 @@
 
     .btn-hangup:active { transform: scale(0.95); }
 
-    /* Widget is in the DOM but its trigger button is hidden via JS */
-    elevenlabs-convai {
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      z-index: 2000;
-    }
   </style>
 </head>
 <body>
@@ -343,60 +336,64 @@
     </div>
   </div>
 
-  <!-- ElevenLabs ConvAI Widget -->
-  <elevenlabs-convai
-    agent-id="agent_5001ks0tttfqfys8e505bm63byp3"
-    placement="bottom"
-  ></elevenlabs-convai>
-
-  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script src="https://unpkg.com/@11labs/client/dist/lib.umd.js"></script>
 
   <script>
+    const { Conversation } = window.client;
+    // const AGENT_ID = 'agent_5001ks0tttfqfys8e505bm63byp3';
+    const AGENT_ID = 'agent_0901ks8j0dzqfxkarsqqq1edj995';
+
     const callModal = document.getElementById('callModal');
     const callBtn   = document.getElementById('callBtn');
     const chatBtn   = document.getElementById('chatBtn');
     const hangupBtn = document.getElementById('hangupBtn');
+    const statusEl  = document.querySelector('.call-status');
 
-    let widgetTrigger = null;
+    let activeSession = null;
 
-    // Wait for the widget's shadow root, grab its trigger button, and hide it.
-    // .click() still works on display:none elements, so we can fire it later.
-    async function initWidget() {
-      const widget = document.querySelector('elevenlabs-convai');
-      if (!widget) return;
-      for (let i = 0; i < 60; i++) {
-        const btn = widget.shadowRoot?.querySelector('button');
-        if (btn) {
-          btn.style.display = 'none';
-          widgetTrigger = btn;
-          return;
-        }
-        await new Promise(r => setTimeout(r, 100));
+    function setStatus(text) {
+      statusEl.innerHTML = `<span class="status-spinner"></span>${text}`;
+    }
+
+    async function startCall() {
+      if (activeSession) return;
+      callModal.classList.add('open');
+      setStatus('Connecting…');
+
+      try {
+        activeSession = await Conversation.startSession({
+          agentId: AGENT_ID,
+          onConnect: () => setStatus('Connected'),
+          onDisconnect: () => { activeSession = null; closeModal(); },
+          onError: (err) => { console.error(err); setStatus('Connection error'); },
+          onModeChange: ({ mode }) => {
+            setStatus(mode === 'speaking' ? 'Mike is speaking…' : 'Listening…');
+          },
+        });
+      } catch (err) {
+        console.error(err);
+        setStatus('Could not start call');
       }
     }
 
-    async function openConversation() {
-      if (!widgetTrigger) await initWidget();
-      widgetTrigger?.click();
+    async function endCall() {
+      if (activeSession) {
+        await activeSession.endSession();
+        activeSession = null;
+      }
+      closeModal();
     }
-
-    callBtn.addEventListener('click', async () => {
-      callModal.classList.add('open');
-      await openConversation();
-    });
-
-    chatBtn.addEventListener('click', () => openConversation());
 
     function closeModal() {
       callModal.classList.remove('open');
+      setStatus('Connecting…');
     }
 
-    hangupBtn.addEventListener('click', closeModal);
-    callModal.addEventListener('click', e => { if (e.target === callModal) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-    // Start hiding the button as soon as possible
-    initWidget();
+    callBtn.addEventListener('click', startCall);
+    chatBtn.addEventListener('click', startCall);
+    hangupBtn.addEventListener('click', endCall);
+    callModal.addEventListener('click', e => { if (e.target === callModal) endCall(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') endCall(); });
   </script>
 </body>
 </html>
